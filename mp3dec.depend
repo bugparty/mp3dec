@@ -1,0 +1,342 @@
+# depslib dependency file v1.0
+1315155572 source:d:\codes\mp3dec\main.c
+	<stdio.h>
+	<stdlib.h>
+
+1331483950 source:d:\codes\mp3dec\test.c
+	<stdio.h>
+	<stdlib.h>
+	<stdbool.h>
+	<assert.h>
+	"io.h"
+
+1331090388 d:\codes\id3lib\id3lib.h
+	<stdio.h>
+
+1330432490 source:d:\codes\id3lib\id3lib.c
+	<stdio.h>
+	<malloc.h>
+	"id3Frame.h"
+
+1329723044 d:\codes\id3lib\id3frame.h
+	"id3lib.h"
+
+1330006669 source:d:\codes\id3lib\id3frame.c
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<malloc.h>
+	"id3lib.h"
+	"id3Frame.h"
+
+1331568733 source:d:\codes\mp3dec\io.c
+	"io.h"
+	"id3lib.h"
+
+1331483968 d:\codes\mp3dec\io.h
+	"mp3dec.h"
+	<stdio.h>
+	<malloc.h>
+
+1331486966 d:\codes\mp3dec\mp3dec.h
+	<stdbool.h>
+	<stdio.h>
+
+1331512407 source:d:\codes\mp3dec\mp3frame.c
+	<stdio.h>
+	"mp3frame.h"
+	"io.h"
+	<stdbool.h>
+	"ulits.h"
+	<string.h>
+
+1331481216 d:\codes\mp3dec\mp3frame.h
+	"mp3dec.h"
+
+1331568733 source:d:\codes\mp3dec\crc.c
+	<stdio.h>
+	<stdlib.h>
+	"crc.h"
+
+1330603292 d:\codes\mp3dec\crc.h
+	<stdbool.h>
+
+1331216896 source:d:\codes\mp3dec\bitstream.c
+	"bitstream.h"
+	<stdlib.h>
+
+1331190478 d:\codes\mp3dec\bitstream.h
+	"mp3dec.h"
+
+1331481294 d:\codes\mp3dec\ulits.h
+
+1331349578 source:d:\codes\mp3dec\ulits.c
+
+1331552240 source:d:\codes\mp3dec\layer3.c
+	<math.h>
+	<stdbool.h>
+	"mp3frame.h"
+	"bitstream.h"
+	"layer3.h"
+	<stdio.h>
+
+1331545677 d:\codes\mp3dec\layer3.h
+	"tables.h"
+
+1331516449 d:\codes\mp3dec\tables.h
+
+1331216896 source:k:\mp3dec\io.c
+	"io.h"
+
+1331483968 k:\mp3dec\io.h
+	"mp3dec.h"
+	<stdio.h>
+	<malloc.h>
+
+1330938820 k:\mp3dec\mp3dec.h
+	<stdbool.h>
+	<stdio.h>
+
+1330605460 source:k:\mp3dec\crc.c
+	<stdio.h>
+	<stdlib.h>
+	"crc.h"
+
+1330603292 k:\mp3dec\crc.h
+	<stdbool.h>
+
+1331216896 source:k:\mp3dec\bitstream.c
+	"bitstream.h"
+	<stdlib.h>
+
+1331190478 k:\mp3dec\bitstream.h
+	"mp3dec.h"
+
+1331349578 source:k:\mp3dec\ulits.c
+
+1331477972 source:k:\mp3dec\test.c
+	<stdio.h>
+	<stdlib.h>
+	<stdbool.h>
+	<assert.h>
+	"io.h"
+
+1331481766 source:k:\mp3dec\mp3frame.c
+	<stdio.h>
+	"mp3frame.h"
+	"io.h"
+	<stdbool.h>
+	"ulits.h"
+	<string.h>
+
+1331481216 k:\mp3dec\mp3frame.h
+	"mp3dec.h"
+
+1331481294 k:\mp3dec\ulits.h
+
+1331480970 source:k:\mp3dec\layer3.c
+	<math.h>
+	<stdbool.h>
+	"mp3frame.h"
+	"bitstream.h"
+	"layer3.h"
+
+1331201088 k:\mp3dec\layer3.h
+	"tables.h"
+
+1331279544 k:\mp3dec\tables.h
+
+1331516419 source:d:\codes\mp3dec\decoder.c
+
+1330432490 source:d:\codes\mp3dec\id3lib.c
+	<stdio.h>
+	<malloc.h>
+	"id3Frame.h"
+
+1329723044 d:\codes\mp3dec\id3frame.h
+	"id3lib.h"
+
+1331090388 d:\codes\mp3dec\id3lib.h
+	<stdio.h>
+
+1330006669 source:d:\codes\mp3dec\id3frame.c
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<malloc.h>
+	"id3lib.h"
+	"id3Frame.h"
+
+1331568241 source:d:\codes\mp3dec\haffman.c
+	"haffman.h"
+
+1331568101 d:\codes\mp3dec\haffman.h
+
+1331216896 source:e:\快盘\codes\mp3dec\bitstream.c
+	"bitstream.h"
+	<stdlib.h>
+
+1331190478 e:\快盘\codes\mp3dec\bitstream.h
+	"mp3dec.h"
+
+1331486966 e:\快盘\codes\mp3dec\mp3dec.h
+	<stdbool.h>
+	<stdio.h>
+
+1331568734 source:e:\快盘\codes\mp3dec\crc.c
+	<stdio.h>
+	<stdlib.h>
+	"crc.h"
+
+1330603292 e:\快盘\codes\mp3dec\crc.h
+	<stdbool.h>
+
+1331516420 source:e:\快盘\codes\mp3dec\decoder.c
+
+1330006670 source:e:\快盘\codes\mp3dec\id3frame.c
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<malloc.h>
+	"id3lib.h"
+	"id3Frame.h"
+
+1331090390 e:\快盘\codes\mp3dec\id3lib.h
+	<stdio.h>
+
+1329723046 e:\快盘\codes\mp3dec\id3frame.h
+	"id3lib.h"
+
+1330432492 source:e:\快盘\codes\mp3dec\id3lib.c
+	<stdio.h>
+	<malloc.h>
+	"id3Frame.h"
+
+1331568734 source:e:\快盘\codes\mp3dec\io.c
+	"io.h"
+	"id3lib.h"
+
+1331483968 e:\快盘\codes\mp3dec\io.h
+	"mp3dec.h"
+	<stdio.h>
+	<malloc.h>
+
+1331552242 source:e:\快盘\codes\mp3dec\layer3.c
+	<math.h>
+	<stdbool.h>
+	"mp3frame.h"
+	"bitstream.h"
+	"layer3.h"
+	<stdio.h>
+
+1331481216 e:\快盘\codes\mp3dec\mp3frame.h
+	"mp3dec.h"
+
+1331545678 e:\快盘\codes\mp3dec\layer3.h
+	"tables.h"
+
+1331516450 e:\快盘\codes\mp3dec\tables.h
+
+1331512408 source:e:\快盘\codes\mp3dec\mp3frame.c
+	<stdio.h>
+	"mp3frame.h"
+	"io.h"
+	<stdbool.h>
+	"ulits.h"
+	<string.h>
+
+1331481294 e:\快盘\codes\mp3dec\ulits.h
+
+1331568800 source:e:\快盘\codes\mp3dec\test.c
+	<stdio.h>
+	<stdlib.h>
+	<stdbool.h>
+	<assert.h>
+	"io.h"
+
+1331349578 source:e:\快盘\codes\mp3dec\ulits.c
+
+1331512408 source:d:\快盘\codes\mp3dec\mp3frame.c
+	<stdio.h>
+	"mp3frame.h"
+	"io.h"
+	<stdbool.h>
+	"ulits.h"
+	<string.h>
+
+1331481216 d:\快盘\codes\mp3dec\mp3frame.h
+	"mp3dec.h"
+
+1331486966 d:\快盘\codes\mp3dec\mp3dec.h
+	<stdbool.h>
+	<stdio.h>
+
+1331483968 d:\快盘\codes\mp3dec\io.h
+	"mp3dec.h"
+	<stdio.h>
+	<malloc.h>
+
+1331481294 d:\快盘\codes\mp3dec\ulits.h
+
+1331552242 source:d:\快盘\codes\mp3dec\layer3.c
+	<math.h>
+	<stdbool.h>
+	"mp3frame.h"
+	"bitstream.h"
+	"layer3.h"
+	<stdio.h>
+
+1331190478 d:\快盘\codes\mp3dec\bitstream.h
+	"mp3dec.h"
+
+1331545678 d:\快盘\codes\mp3dec\layer3.h
+	"tables.h"
+
+1331516450 d:\快盘\codes\mp3dec\tables.h
+
+1331568734 source:d:\快盘\codes\mp3dec\io.c
+	"io.h"
+	"id3lib.h"
+
+1331090390 d:\快盘\codes\mp3dec\id3lib.h
+	<stdio.h>
+
+1331349578 source:d:\快盘\codes\mp3dec\ulits.c
+
+1330432492 source:d:\快盘\codes\mp3dec\id3lib.c
+	<stdio.h>
+	<malloc.h>
+	"id3Frame.h"
+
+1329723046 d:\快盘\codes\mp3dec\id3frame.h
+	"id3lib.h"
+
+1330006670 source:d:\快盘\codes\mp3dec\id3frame.c
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<malloc.h>
+	"id3lib.h"
+	"id3Frame.h"
+
+1331568734 source:d:\快盘\codes\mp3dec\crc.c
+	<stdio.h>
+	<stdlib.h>
+	"crc.h"
+
+1330603292 d:\快盘\codes\mp3dec\crc.h
+	<stdbool.h>
+
+1331216896 source:d:\快盘\codes\mp3dec\bitstream.c
+	"bitstream.h"
+	<stdlib.h>
+
+1331568800 source:d:\快盘\codes\mp3dec\test.c
+	<stdio.h>
+	<stdlib.h>
+	<stdbool.h>
+	<assert.h>
+	"io.h"
+
+1331516420 source:d:\快盘\codes\mp3dec\decoder.c
+

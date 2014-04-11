@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<BrowseTracker_layout_file>
+	<ActiveTarget name="Release" />
+	<File name="bitstream.c" open="1" top="0" tabpos="2">
+		<Cursor position="591" topLine="88" />
+	</File>
+	<File name="crc.c" open="0" top="0" tabpos="10">
+		<Cursor position="5721" topLine="90" />
+	</File>
+	<File name="crc.h" open="0" top="0" tabpos="4">
+		<Cursor position="322" topLine="0" />
+	</File>
+	<File name="decoder.c" open="1" top="0" tabpos="9">
+		<Cursor position="0" topLine="0" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="haffman.c" open="1" top="0" tabpos="6">
+		<Cursor position="157" topLine="0" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="haffman.h" open="1" top="0" tabpos="0">
+		<Cursor position="0" topLine="0" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="header.h" open="1" top="0" tabpos="5">
+		<Cursor position="299" topLine="0" />
+	</File>
+	<File name="id3Frame.c" open="1" top="0" tabpos="7">
+		<Cursor position="3507" topLine="177" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="id3lib.c" open="1" top="0" tabpos="8">
+		<Cursor position="289" topLine="105" />
+	</File>
+	<File name="id3lib.h" open="1" top="0" tabpos="0">
+		<Cursor position="367" topLine="0" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="io.c" open="1" top="0" tabpos="3">
+		<Cursor position="334" topLine="0" />
+	</File>
+	<File name="io.h" open="1" top="0" tabpos="5">
+		<Cursor position="51" topLine="0" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="layer3.c" open="1" top="0" tabpos="1">
+		<Cursor position="129" topLine="0" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="layer3.h" open="1" top="0" tabpos="2">
+		<Cursor position="862" topLine="23" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="mp3dec.h" open="1" top="1" tabpos="2">
+		<Cursor position="157" topLine="0" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="mp3frame.c" open="1" top="0" tabpos="4">
+		<Cursor position="1457" topLine="44" />
+	</File>
+	<File name="mp3frame.h" open="1" top="0" tabpos="3">
+		<Cursor position="698" topLine="5" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="tables.h" open="1" top="0" tabpos="7">
+		<Cursor position="54" topLine="0" />
+		<BrowseMarks positions="" />
+		<Book_Marks positions="" />
+	</File>
+	<File name="test.c" open="1" top="0" tabpos="1">
+		<Cursor position="3376" topLine="127" />
+	</File>
+	<File name="ulits.c" open="0" top="0" tabpos="4">
+		<Cursor position="975" topLine="23" />
+	</File>
+	<File name="version.h" open="0" top="0" tabpos="4">
+		<Cursor position="438" topLine="0" />
+	</File>
+</BrowseTracker_layout_file>
