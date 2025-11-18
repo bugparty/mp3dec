@@ -50,7 +50,7 @@ void layer3_init(int wch)
         }
     else
         intFirstChannel = intLastChannel = 0;
-    //´ý½âÂëÎÄ¼þµÄ²»Í¬ÌØÕ÷ÓÃµ½²»Í¬µÄ±äÁ¿.³õÊ¼»¯:
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ä²ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½Í¬ï¿½Ä±ï¿½ï¿½ï¿½.ï¿½ï¿½Ê¼ï¿½ï¿½:
     intSfreq =  frame_get_sample_rate();  //frequency
     intSfreq += (frame_getID() == frame_MPEG1) ? 0 : (frame_getID() == frame_MPEG2 ? 3 : 6);
     /*
@@ -65,33 +65,41 @@ void layer3_init(int wch)
     case 1:
         intSfbIdxLong = intSfbIdxLong1;
         intSfbIdxShort = intSfbIdxShort1;
+        break;
     case 2:
         intSfbIdxLong = intSfbIdxLong2;
         intSfbIdxShort = intSfbIdxShort2;
+        break;
     case 3:
         intSfbIdxLong = intSfbIdxLong3;
         intSfbIdxShort = intSfbIdxShort3;
+        break;
     case 4:
         intSfbIdxLong = intSfbIdxLong4;
         intSfbIdxShort = intSfbIdxShort4;
+        break;
     case 5:
         intSfbIdxLong = intSfbIdxLong5;
         intSfbIdxShort = intSfbIdxShort5;
+        break;
     case 6:
         intSfbIdxLong = intSfbIdxLong6;
         intSfbIdxShort = intSfbIdxShort6;
+        break;
     case 7:
         intSfbIdxLong = intSfbIdxLong7;
         intSfbIdxShort = intSfbIdxShort7;
+        break;
     case 8:
         intSfbIdxLong = intSfbIdxLong8;
         intSfbIdxShort = intSfbIdxShort8;
+        break;
     }
     for(i=0 ; i < 22; i++)
         intWidthLong[i] = intSfbIdxLong[i+1] - intSfbIdxLong[i];
     for(i = 0; i< 13; i++)
         intWidthShort[i] = intSfbIdxShort[i+1] - intSfbIdxShort[i];
-    //Ç¿¶ÈÁ¢ÌåÉù
+    //Ç¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     boolIntensityStereo = frame_isIStereo();
 
 }
@@ -104,7 +112,7 @@ bool layer3_getSideInfo(PSideInfo si)
     int *scfsi;
 
     //iso11172-3 2.4.1.7
-    if(frame_get_layer() == frame_MPEG1)
+    if(frame_getID() == frame_MPEG1)
     {
         si->main_data_begin = bitstream_getBits9(9); //uimsbf
         if( 1 == intChannels ) //if mode == single_channel
@@ -336,7 +344,7 @@ void layer3_getScaleFactors_2(int ch, int gr)
             slen >>= 3;
             if( 0 != num)
             {
-                for(j = 0; j , pnt[i] ; j += 3)
+                for(j = 0; j < pnt[i] ; j += 3)
                 {
                     for(k = 0; k < 3; k++)
                         s[k][scf] = bitstream_getBits17(num);

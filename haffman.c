@@ -1,17 +1,20 @@
 #include "haffman.h"
 #include "layer3.h"
 #include "mp3dec.h"
+#include "mp3frame.h"
+#include "bitstream.h"
+#include <stdlib.h>
 static int rzero_index[2];
 static int *is;	//[32 * 18 + 4];
 extern PSideInfo si;
-extern int intSfbIdxLong;
+extern const int* intSfbIdxLong;
 //many things to be done
 
 /*
- * intMask: ÔÝ´æÎ»Á÷»º³åÇø²»³¬¹ý32±ÈÌØÊý¾Ý,Î»Á÷2¼¶»º³å
- * intBitNum: intMaskÊ£ÓàµÄ±ÈÌØÊý
- * intPart2Remain: ¹þ·òÂü±àÂëµÄÖ÷Êý¾ÝÊ£ÓàµÄ±ÈÌØÊý
- * intRegion[]: ´óÖµÇøÄ³Ò»Âë±í½âÂëÖ÷Êý¾ÝµÄÇøÓò
+ * intMask: ï¿½Ý´ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½32ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Î»ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * intBitNum: intMaskÊ£ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½
+ * intPart2Remain: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê£ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½
+ * intRegion[]: ï¿½ï¿½Öµï¿½ï¿½Ä³Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½ï¿½
  */
 int intBitNum, intMask, intPart2Remain;
 int intRegion[3];
@@ -24,8 +27,8 @@ struct HuffTab {
 typedef struct HuffTab HuffTab;
 typedef struct HuffTab * PHuffTab;
 
-PHuffTab htBV[];
-PHuffTab htCount1[];
+PHuffTab htBV[32];  // Huffman tables for big values (0-31)
+PHuffTab htCount1[2];  // Huffman tables for count1 region (0-1)
 
 void haffman_init()
 {
@@ -111,20 +114,20 @@ void haffman_init()
     htBV[26]->linbits = 6;
     htBV[26]->table   = htbv24;
     htBV[27] = (PHuffTab) malloc(sizeof(HuffTab));
-    htBV[0]->linbits = 7;
-    htBV[0]->table   = htbv24;
+    htBV[27]->linbits = 7;
+    htBV[27]->table   = htbv24;
     htBV[28] = (PHuffTab) malloc(sizeof(HuffTab));
-    htBV[0]->linbits = 8;
-    htBV[0]->table   = htbv24;
+    htBV[28]->linbits = 8;
+    htBV[28]->table   = htbv24;
     htBV[29] = (PHuffTab) malloc(sizeof(HuffTab));
-    htBV[0]->linbits = 9;
-    htBV[0]->table   = htbv24;
+    htBV[29]->linbits = 9;
+    htBV[29]->table   = htbv24;
     htBV[30] = (PHuffTab) malloc(sizeof(HuffTab));
-    htBV[0]->linbits = 11;
-    htBV[0]->table   = htbv24;
+    htBV[30]->linbits = 11;
+    htBV[30]->table   = htbv24;
     htBV[31] = (PHuffTab) malloc(sizeof(HuffTab));
-    htBV[0]->linbits = 13;
-    htBV[0]->table   = htbv24;
+    htBV[31]->linbits = 13;
+    htBV[31]->table   = htbv24;
 
     htCount1[0] = (PHuffTab) malloc(sizeof(HuffTab));
     htCount1[1] = (PHuffTab) malloc(sizeof(HuffTab));
@@ -133,10 +136,10 @@ void haffman_init()
 }
 void huffman_decoder(int ch, int gr)
 {
-    PGRinfo s = &si->ch[ch].gr[gr];
+    PGRInfo s = &si->ch[ch].gr[gr];
     int r1, r2;
 
-    if( 0 != s->wnidow_switching_flag)
+    if( 0 != s->window_switching_flag)
     {
         int v = frame_getID();
         if(frame_MPEG1 == v || frame_MPEG2 == v && s->block_type == 2)
@@ -156,7 +159,7 @@ void huffman_decoder(int ch, int gr)
     }
     else
     {
-        r1 = s->regino1_count + 1;
+        r1 = s->region0_count + 1;
         r2 = r1 + s->region1_count + 1;
 
         if( r2 > sizeof(intSfbIdxLong) -1)
@@ -194,26 +197,27 @@ int haffman_decode(int ch, PGRInfo gri, int * intHaffValue)
         i = 574;
     if(x < i) {
         intRegion[0] = x;
-        if( y < i
-           {
+        if( y < i) {
              intRegion[1] = y;
              intRegion[2] = i;
-           }
-           else
+        }
+        else
             intRegion[1] = intRegion[2] = i;
     }else
         intRegion[0] = intRegion[1] = intRegion[2] = i;
-    //Ê¹Î»Á÷»º³åÇø×Ö½Ú¶ÔÆë
+    //Ê¹Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½Ú¶ï¿½ï¿½ï¿½
     intBitNum = 8 - bitstream_getBitPos();
     intMask = bitstream_getBits9(intBitNum);
     intMask <<= 32 - intBitNum;
     intPart2Remain -= intBitNum;
 
-    //decode big value section
-    for(i = 0; i < 3; i++) {
-        htCur =
-    }
+    //TODO: decode big value section - implementation incomplete
+    // for(i = 0; i < 3; i++) {
+    //     PHuffTab htCur = htBV[gri->table_select[i]];
+    //     // Decode big values using huffman table
+    // }
 
+    // TODO: decode count1 section - implementation incomplete
 
-    }
+    return intIndex;
 }

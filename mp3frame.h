@@ -28,6 +28,7 @@ int frame_get_LSF();
 int frame_get_layer();
 int frame_get_sample_rate();
 int frame_get_bit_rate();
+int frame_getID();
 
 bool frame_parseVBR();
 void frame_praseHeader(DWORD h);
