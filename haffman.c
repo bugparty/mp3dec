@@ -7,7 +7,7 @@
 static int rzero_index[2];
 static int *is;	//[32 * 18 + 4];
 extern PSideInfo si;
-extern const int* intSfbIdxLong;
+// intSfbIdxLong is now declared in layer3.h
 //many things to be done
 
 /*

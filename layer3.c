@@ -17,8 +17,8 @@ float PrevBlck[2][32][18];
 static int intWhichChannel, intFirstChannel, intLastChannel;
 static int intChannels;
 static int intMaxGr;
-static const int*  intSfbIdxLong;
-static const int*  intSfbIdxShort;
+const int*  intSfbIdxLong;    // Made non-static so haffman.c can access
+const int*  intSfbIdxShort;   // Made non-static so haffman.c can access
 static bool boolIntensityStereo;
 static int intSfreq;
 
