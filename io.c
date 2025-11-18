@@ -32,7 +32,7 @@ void io_open(char * filename, int intBufSize)
     longBufSizeMask = ~((long) intBufSize - 1L);
     boolBufDirty = false;
 
-    lFrameOffset = 0;	//µÚÒ»Ö¡µÄÆ«ÒÆÁ¿
+    lFrameOffset = 0;	//ï¿½ï¿½Ò»Ö¡ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½
     long lFrameSize = longFileSize ;
 
 
@@ -48,6 +48,9 @@ void io_open(char * filename, int intBufSize)
         lFrameOffset = size_v2;
         lFrameSize -= size_v2;
         //load id3 infomations to be done
+        // Seek past ID3v2 tag to start of MP3 frames
+        fseek(fin, size_v2, SEEK_SET);
+        longCurPos = size_v2;
     }
 
     //ID3 v1
@@ -75,8 +78,14 @@ size_t io_offset()
 }
 BYTE io_read()
 {
+    static int read_count = 0;
+    long pos_before = ftell(fin);
     BYTE buffer;
     buffer = fgetc(fin);
+    if(read_count < 10) {
+        fprintf(stderr, "    io_read[%d]: pos_before=%ld, read=0x%02X, pos_after=%ld\n",
+                read_count++, pos_before, buffer, ftell(fin));
+    }
     return buffer;
 }
 int io_reads(BYTE* b, int off, int len)
@@ -96,7 +105,7 @@ int io_reads_dir(BYTE* b, int off, int len)
 
 }
 
-//´Óµ±Ç°Î»ÖÃ¸´ÖÆ,²»ÒÆ¶¯ÎÄ¼þ"Ö¸Õë"
+//ï¿½Óµï¿½Ç°Î»ï¿½Ã¸ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Æ¶ï¿½ï¿½Ä¼ï¿½"Ö¸ï¿½ï¿½"
 
 int io_dump(int src_off, BYTE* b, int dst_off, int len)
 {

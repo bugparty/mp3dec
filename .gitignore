@@ -21,3 +21,6 @@
 *.i*86
 *.x86_64
 *.hex
+mp3_parser
+mp3_parser_full
+mp3dec_test

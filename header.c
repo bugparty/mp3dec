@@ -1,5 +1,9 @@
 #include "header.h"
+#include "io.h"
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+
 #define MAXSTRING 1000
 /*
  * intBitrateTable[intLSF][intLayer-1][intBitrateIndex]
@@ -60,7 +64,6 @@ static int intVersionID;
 	 * "10"	 Layer II
 	 * "01"	 Layer III
 	 * "00"	 reserved
-	 * 已换算intLayer=4-intLayer: 1-Layer I; 2-Layer II; 3-Layer III; 4-reserved
 	 */
 static int intLayer;
 
@@ -113,7 +116,26 @@ static int intSideInfoSize;		//side_information length
 static int intLSF;
 static int intStandardMask = 0xffe00000;
 static bool boolMS_Stereo, boolIntensityStereo;
-//static IRandomAccess iraInput;
+
+// MP3 file frame info - forward declarations
+static int intFrameCounter = 0;
+static long longAllFrameSize;	//total frame size
+static long longFrameOffset;	//first frame offset
+static long longAllTrackFrames;	//frame count
+static float floatFrameDuration;	//frame duration (seconds)
+static char strDuration[MAXSTRING];
+static char progress[50];
+
+// VBR info stored in first frame
+static bool boolVBR;
+static BYTE* byteVBRToc;
+static char strVBREncoder[MAXSTRING];
+static char strBitRate[MAXSTRING];
+
+// Forward function declarations
+static void headerCRC();
+static int progress_index = 1;
+
 bool isMSStereo() {
 		return boolMS_Stereo;
 	}
@@ -173,10 +195,10 @@ int getFrameSize() {
 	}
 int mp3syncword()
 {
-    DWORD h,read_byte;
+    DWORD h, read_byte;
     int ioff = -4;
     do{
-        if(EOF == (h = fgetc(fin)))
+        if(EOF == (read_byte = fgetc(fin)))
             return 0;
         ioff++;
         h = (h<<8) | read_byte;
@@ -212,7 +234,7 @@ DWORD makeDWORD(BYTE *buffer, int offset)
 }
 void parseHeader(DWORD h) {
 		intVersionID = (h >> 19) & 3;
-		intLayer = 4 - (h >> 17) & 3;
+		intLayer = 4 - ((h >> 17) & 3);  // Fixed: added parentheses
 		intProtectionBit = (h >> 16) & 0x1;
 		intBitrateIndex = (h >> 12) & 0xF;
 		intSamplingFrequency = (h >> 10) & 3;
@@ -240,7 +262,6 @@ void parseHeader(DWORD h) {
 			intFrameSize /= intSamplingRateTable[intVersionID][intSamplingFrequency]<<(intLSF);
 			intFrameSize += intPaddingBit;
 
-			//计算帧边信息长度
 			if(intVersionID == MPEG1)
 				intSideInfoSize = (intMode == 3) ? 17 : 32;
 			else
@@ -251,7 +272,6 @@ void parseHeader(DWORD h) {
 			break;
 		}
 
-		//计算主数据长度
 		intMainDataSlots = intFrameSize - 4 - intSideInfoSize;
 		if(intProtectionBit == 0)
 			intMainDataSlots -= 2;
@@ -260,58 +280,57 @@ bool syncSearch()
 {
     DWORD h, cur_mask = 0;
     bool bfind = false;
-    long start_pos = ftell(fin);
+    long start_pos = io_offset();
     while(!bfind) {
-			h = syncWord();
+			h = mp3syncword();
 			parseHeader(h);
-
-			//若intVersionID等帧的特征未改变,不用与下一帧的同步头比较.
 
 			if(boolSync) {
 				bfind = true;
 				break;
 			}
 
-			//与下一帧的同步头比较
-
+			//compare next frame header
 			cur_mask = 0xffe00000;		//syncword
 			cur_mask |= h & 0x180000;	//intVersionID
 			cur_mask |= h & 0x60000;	//intLayer
-			cur_mask |= h & 0x60000;	//intSamplingFrequency
-			//cur_mask |= h & 0xC0;		//intMode
-			//intModeExtension 不是始终不变.
+			cur_mask |= h & 0xC00;		//intSamplingFrequency
 
 			BYTE * b4 = (BYTE*)malloc(4);
-			if(io_dump(intFrameSize-4, b4, 0, 4) < 4)
+			if(b4 == NULL) {
 				break;
+			}
+			if(io_dump(intFrameSize-4, b4, 0, 4) < 4) {
+				free(b4);
+				break;
+			}
 			bfind = (makeDWORD(b4, 0) & cur_mask) == cur_mask;
-			b4 = NULL;
-			if(io_getFilePointer() - start_pos > 0xffff) {
-				printf("\n搜索 64K 未发现MP3帧后放弃。\n");
+			free(b4);
+
+			if(io_offset() - start_pos > 0xffff) {
+				printf("\nSearch 64K without finding valid MP3 frame\n");
 				break;
 			}
 		}
 
 		if(!boolSync) {
 			boolSync = true;
-			if(bfind && intStandardMask == 0xffe00000) {	//是第一帧:
+			if(bfind && intStandardMask == 0xffe00000) {	//first frame:
 				intStandardMask = cur_mask;
 				longAllFrameSize = io_length();
-				longFrameOffset = io_getFilePointer()-4;
+				longFrameOffset = io_offset()-4;
 				longAllFrameSize -= longFrameOffset;
 				parseVBR();
 				getTrackFrames();
 				getDuration();
 				printHeaderInfo();
 			}
-			printf("Begining of syncword: bytes %i, frame_number =%i",
-					(getFilePointer()-4),frame_number);
+			printf("Begining of syncword: bytes %ld, frame_number =%d",
+					(io_offset()-4), intFrameCounter);
 		}
 		return bfind;
-	}
-
 }
-static int intFrameCounter = 0;	//当前帧序号
+
 bool syncFrame()
 {
     if(syncSearch() == false)
@@ -321,21 +340,16 @@ bool syncFrame()
     intFrameCounter++;
     return true;
 }
+
 static void headerCRC()
 {
-    //unfinished
-
+    //TODO: implement CRC check
+    io_read();
+    io_read();
 }
 
 	// -------------------------------------------------------------------
-	// 以下是辅助功能。删除掉源码及相关调用不影响正常播放。
-	// -------------------------------------------------------------------
-	// MP3 文件帧数等信息
-static long longAllFrameSize;	//帧长度总和(文件长度减去ID3 tag, APE tag 等长度)
-static long longFrameOffset;	//第一帧的偏移量
-static long longAllTrackFrames;	//帧数
-static float floatFrameDuration;	//一帧时长(秒)
-static char strDuration[MAXSTRING];
+	// MP3 file frame info functions
 
 long getTrackFrames() {
 		if(longAllTrackFrames == 0)
@@ -343,83 +357,88 @@ long getTrackFrames() {
 		return longAllTrackFrames;
 	}
 	/*
-	 * 返回MP3文件时长(秒)
+	 * Calculate MP3 file duration (seconds)
 	 */
 float getDuration() {
 		floatFrameDuration = (float)1152 / (intSamplingRateTable[intVersionID][intSamplingFrequency] << intLSF);
 		float duration = floatFrameDuration * longAllTrackFrames;
 		int m = (int)(duration / 60);
-		strDuration = String.format("%1$02d:%2$02d", m, (int)(duration - m * 60 + 0.5));
-		progress = new StringBuffer(">----------------------------------------");
+		sprintf(strDuration, "%02d:%02d", m, (int)(duration - m * 60 + 0.5));
+		strcpy(progress, ">----------------------------------------");
 
 		return duration;
 }
+
 // -------------------------------------------------------------------
-	// 解码存储在第一帧的VBR信息
-static bool boolVBR;
-BYTE* byteVBRToc;
-char strVBREncoder[MAXSTRING];
-char strBitRate[MAXSTRING];
+// VBR parsing function
 
 bool parseVBR() {
-		BYTE* b = malloc(intFrameSize);
-		//modified interface
+		int i;
+		BYTE* b = (BYTE*)malloc(intFrameSize);
+		if(b == NULL)
+			return false;
+
 		io_dump(0, b, 0, intFrameSize);
 		if (intFrameSize < 124 + intSideInfoSize) {
-			b = null;
+			free(b);
 			return false;
 		}
-		for (int i = 2; i < intSideInfoSize; ++i)
+		for (i = 2; i < intSideInfoSize; ++i)
 			if (b[i] != 0) {
-				b = null;
+				free(b);
 				return false;
 			}
 
-		// Xing header means always VBR
+		// Xing or Info header means always VBR
 		if (((b[intSideInfoSize] == 'X') && (b[intSideInfoSize + 1] == 'i')
 				&& (b[intSideInfoSize + 2] == 'n') && (b[intSideInfoSize + 3] == 'g'))
 				|| ((b[intSideInfoSize] == 'I') && (b[intSideInfoSize + 1] == 'n')
 				&& (b[intSideInfoSize + 2] == 'f') && (b[intSideInfoSize + 3] == 'o'))) {
 			boolVBR = true;
-			longAllFrameSize -= intFrameSize;	//VBR的第一帧无主数据，存储的是VBR信息。
+			longAllFrameSize -= intFrameSize;
 			longFrameOffset += intFrameSize;
-		} else
+		} else {
+			free(b);
 			return false;
+		}
 
-		int xing_flags = makeInt32(b, intSideInfoSize + 4);
+		int xing_flags = makeDWORD(b, intSideInfoSize + 4);
 		if ((xing_flags & 1) == 1) { // track frames
-			longAllTrackFrames = makeInt32(b, intSideInfoSize + 8);
+			longAllTrackFrames = makeDWORD(b, intSideInfoSize + 8);
 			if (longAllTrackFrames < 0)
 				longAllTrackFrames = 0;
-			printf("track frames: %i",longAllTrackFrames);
+			printf("track frames: %ld\n", longAllTrackFrames);
 		}
 		if ((xing_flags & 0x2) != 0) { // track bytes
-			longAllFrameSize = makeInt32(b, intSideInfoSize + 12);
-			printf(" track bytes: %i" ,longAllFrameSize);
+			longAllFrameSize = makeDWORD(b, intSideInfoSize + 12);
+			printf("track bytes: %ld\n", longAllFrameSize);
 		}
 		if ((xing_flags & 0x4) != 0) { // TOC: intSideInfoSize+16, 100 bytes.
 			byteVBRToc = (BYTE*) malloc(100);
-			memcpy(b+intSideInfoSize+16,  byteVBRToc, 100);
-			//System.out.println("         TOC: true");
+			if(byteVBRToc != NULL) {
+				memcpy(byteVBRToc, b+intSideInfoSize+16, 100);  // Fixed: corrected order
+				printf("TOC: true\n");
+			}
 		}
 		if ((xing_flags & 0x8) != 0) { // VBR quality
-			int xing_quality = makeInt32(b, intSideInfoSize + 116);
-			System.out.println("     quality: " + xing_quality);
+			int xing_quality = makeDWORD(b, intSideInfoSize + 116);
+			printf("quality: %d\n", xing_quality);
 		}
 
 		if (b[intSideInfoSize + 120] == 0) {
-			b = null;
+			free(b);
 			return true;
 		}
-		strVBREncoder = new String(b, intSideInfoSize + 120, 8);
-		System.out.println("     encoder: " + strVBREncoder);
+		strncpy(strVBREncoder, (char*)(b + intSideInfoSize + 120), 8);
+		strVBREncoder[8] = '\0';
+		printf("encoder: %s\n", strVBREncoder);
 
 		int lame_vbr = b[intSideInfoSize + 129] & 0xf;
 		switch (lame_vbr) {
 		// from rev1 proposal... not sure if all good in practice
 		case 1:
 		case 8: // CBR
-			//strBitRate = "CBR";
+			strcpy(strBitRate, "CBR");
 			break;
 		case 2:
 		case 9: // ABR
@@ -429,28 +448,26 @@ bool parseVBR() {
 			strcpy(strBitRate,"VBR");
 		}
 
-		b = NULL;
+		free(b);
 		return true;
 	}
 
 	// -------------------------------------------------------------------
-	// 打印信息
+	// Print info
 void printHeaderInfo() {
-		char sver[][] = {"MPEG 2.5", "reserved", "MPEG 2.0", "MPEG 1.0"};
-		char mode_str[][] = {", Stereo",", Joint Stereo",", Dual channel",", Single channel(Mono)"};
-		char exmode_str[][] = {"","(I/S)","(M/S)","(I/S & M/S)"};
+		char *sver[] = {"MPEG 2.5", "reserved", "MPEG 2.0", "MPEG 1.0"};
+		char *mode_str[] = {", Stereo",", Joint Stereo",", Dual channel",", Single channel(Mono)"};
+		char *exmode_str[] = {"","(I/S)","(M/S)","(I/S & M/S)"};
 		if(!boolVBR)
-			strBitRate = String.format("%1$dK", intBitrateTable[intLSF][intLayer-1][intBitrateIndex]);
-		System.out.println("\r" + sver[intVersionID] + ", Layer " + intLayer +
-			", " + getFrequency()+"Hz, " +
-			strBitRate +
-			mode_str[intMode] +
-			exmode_str[intModeExtension] + ", " +
+			sprintf(strBitRate, "%dK", intBitrateTable[intLSF][intLayer-1][intBitrateIndex]);
+		printf("\r%s, Layer %d, %dHz, %s%s%s, %s\n",
+			sver[intVersionID], intLayer,
+			getFrequency(),
+			strBitRate,
+			mode_str[intMode],
+			exmode_str[intModeExtension],
 			strDuration);
 	}
-
-static StringBuffer progress;
-static int progress_index = 1;
 
 void printState() {
 		float t = intFrameCounter * floatFrameDuration;
@@ -460,16 +477,13 @@ void printState() {
 		if(boolVBR)
 			percent = (float)intFrameCounter / longAllTrackFrames * 100;
 		else
-			percent = (float)iraInput.getFilePointer() / iraInput.length() * 100;
+			percent = (float)io_offset() / io_length() * 100;
 		int i = ((int)(percent + 0.5) << 2) / 10;
-		if(i == progress_index) {
-			progress.replace(i-1, i+1, "=>");
+		if(i == progress_index && i < 40) {
+			progress[i] = '=';
+			progress[i+1] = '>';
 			progress_index++;
 		}
-		System.out.printf("\r%1$02d:%2$04.1f [%3$-41s] %4$.1f%%", m, s, progress, percent);
+		printf("\r%02d:%04.1f [%-41s] %.1f%%", m, s, progress, percent);
+		fflush(stdout);
 	}
-
-	// -------------------------------------------------------------------
-	// 帧定位
-	//seekFrame() ...
-}
