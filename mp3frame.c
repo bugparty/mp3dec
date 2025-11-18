@@ -83,10 +83,10 @@ static bool boolIntensityStereo;
 static int intFrameCounter = 0;
 static bool boolSync;
 
-static long longAllFrameSize;  	//Ö¡³¤¶È×ÜºÍ(ÎÄ¼þ³¤¶È¼õÈ¥ID3 tag, APE tag µÈ³¤¶È)
-static long longFrameOffset;    //µÚÒ»Ö¡µÄÆ«ÒÆÁ¿
-static long longAllTrackFrames;	//Ö¡Êý
-static double floatFrameDuration;	//Ò»Ö¡Ê±³¤(Ãë)
+static long longAllFrameSize;  	//Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½Üºï¿½(ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½È¼ï¿½È¥ID3 tag, APE tag ï¿½È³ï¿½ï¿½ï¿½)
+static long longFrameOffset;    //ï¿½ï¿½Ò»Ö¡ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½
+static long longAllTrackFrames;	//Ö¡ï¿½ï¿½
+static double floatFrameDuration;	//Ò»Ö¡Ê±ï¿½ï¿½(ï¿½ï¿½)
 
 static bool boolVBR;
 static BYTE * byteVBRToc;
@@ -98,16 +98,30 @@ char strProgress[50];
 
 int frame_check_sync(DWORD h)
 {
+    static int check_count = 0;
     // the syncword
     //1111 1111 1111
     //added mepg2.5
     //1111 1111 111
-    if( (h & intStandardMask) != intStandardMask
-            || (((h >> 19) & 3) == 1)		// version ID:  01 - reserved
-            || (((h >> 17) & 3) == 0)		// Layer index: 00 - reserved
-            || (((h >> 12) & 0xf) == 0xf)
-            || (((h >> 12) & 0xf) == 0)
-            || (((h >> 10) & 3) == 3))
+    // Mask to 32 bits to avoid issues with 64-bit DWORD
+    DWORD h32 = h & 0xFFFFFFFF;
+    // Also mask both sides of comparison to avoid sign-extension of signed int mask
+    int c1 = ((h32 & 0xFFFFFFFF) & (intStandardMask & 0xFFFFFFFF)) != (intStandardMask & 0xFFFFFFFF);
+    int c2 = (((h32 >> 19) & 3) == 1);     // version ID:  01 - reserved
+    int c3 = (((h32 >> 17) & 3) == 0);     // Layer index: 00 - reserved
+    int c4 = (((h32 >> 12) & 0xf) == 0xf); // bitrate all 1s - reserved
+    int c5 = (((h32 >> 12) & 0xf) == 0);   // bitrate all 0s - free format
+    int c6 = (((h32 >> 10) & 3) == 3);     // sample rate 11 - reserved
+
+    if(check_count < 10) {
+        if((h & 0xFFF00000) == 0xFFF00000) {  // Only log sync-word-like values
+            fprintf(stderr, "      check_sync(0x%08lX): c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d => %d\n",
+                    (unsigned long)h, c1, c2, c3, c4, c5, c6, !(c1||c2||c3||c4||c5||c6));
+            check_count++;
+        }
+    }
+
+    if(c1 || c2 || c3 || c4 || c5 || c6)
         return 0;
     else
         return 1;
@@ -134,20 +148,40 @@ size_t frame_search_header(size_t offset)
 }
 DWORD frame_syncWord()
 {
+    static int call_count = 0;
+    if(call_count < 3) {
+        fprintf(stderr, ">>> frame_syncWord CALLED #%d\n", call_count++);
+        fflush(stderr);
+    }
+
     int ioff = -4;
     DWORD h = 0;
+
+    // Debug first 4 bytes only
     do
     {
-        h = (h<<8) | io_read();
+        BYTE b = io_read();
+        h = (h<<8) | b;
         ioff ++;
-
+        // Mask to 32 bits for checking (DWORD might be 64-bit)
+        DWORD h32 = h & 0xFFFFFFFF;
+        if(ioff >= 0 && ioff <= 3) {
+            int check_result = frame_check_sync(h32);
+            fprintf(stderr, "  syncWord[%d]: read=0x%02X, h32=0x%08lX, check=%d\n",
+                    ioff, b, (unsigned long)h32, check_result);
+            fflush(stderr);
+            if(check_result && ioff == 0) {
+                fprintf(stderr, "  ^^^ ACCEPTED at ioff=0! Exiting loop.\n");
+                fflush(stderr);
+            }
+        }
     }
-    while (frame_check_sync(h) == false);
+    while (frame_check_sync(h & 0xFFFFFFFF) == false);
 
     if(ioff > 0)
         boolSync = false;
 
-    return h;
+    return h & 0xFFFFFFFF;  // Return only 32-bit value
 }
 PAUDIO_HEADER frame_praseHeader_(DWORD h)
 {
@@ -202,7 +236,7 @@ void frame_praseHeader(DWORD h)
         intFrameSize /= SamplingRateTable[hdr->ID][hdr->sampling_frequency]<<(intLSF);
         intFrameSize += hdr->padding_bit;
 
-        //¼ÆËãÖ¡±ßÐÅÏ¢³¤¶È
+        //ï¿½ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½
         if(hdr->ID == 1)  //version 1 MEPG! 0 MEPG2
             intSideInfoSize = (hdr->mode == 3) ? 17 : 32;
         else
@@ -213,7 +247,7 @@ void frame_praseHeader(DWORD h)
         break;
     }
 
-    //¼ÆËãÖ÷Êý¾Ý³¤¶È
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý³ï¿½ï¿½ï¿½
     intMainDataSlots = intFrameSize - 4 - intSideInfoSize;
     if(hdr->protection_bit == 0)
         intMainDataSlots -= 2;
@@ -294,9 +328,9 @@ bool frame_isIStereo()
     return boolIntensityStereo;
 }
 /*
-* Ö¡Í¬²½: ²éÕÒµ½Ö¡Í¬²½×ÖºóÓëÏÂÒ»Ö¡µÄintVersionIDµÈ±È½Ï,
-È·¶¨ÊÇ·ñÕÒµ½ÓÐÐ§µÄÍ¬²½×Ö.
-* ÔõÑù¸ü¼òµ¥¡¢ÓÐÐ§Ö¡Í¬²½?
+* Ö¡Í¬ï¿½ï¿½: ï¿½ï¿½ï¿½Òµï¿½Ö¡Í¬ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½ï¿½ï¿½Ò»Ö¡ï¿½ï¿½intVersionIDï¿½È±È½ï¿½,
+È·ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Òµï¿½ï¿½ï¿½Ð§ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½.
+* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½òµ¥¡ï¿½ï¿½ï¿½Ð§Ö¡Í¬ï¿½ï¿½?
 */
 
 bool frame_syncSearch()
@@ -306,11 +340,20 @@ bool frame_syncSearch()
     size_t start_pos = io_offset();
     DWORD dwH;
 
+    if(intFrameCounter < 3) {
+        fprintf(stderr, "DEBUG: frame_syncSearch start, counter=%d, start_pos=%ld\n",
+                intFrameCounter, (long)start_pos);
+    }
+
     while(!bfind)
     {
+        fprintf(stderr, "DEBUG: Loop start, counter=%d\n", intFrameCounter);
         h = frame_syncWord();
+        fprintf(stderr, "DEBUG: After syncWord, header=0x%08lX offset=%ld\n",
+                (unsigned long)h, (long)(io_offset()-4));
         frame_praseHeader(h);
-        //ÈôintVersionIDµÈÖ¡µÄÌØÕ÷Î´¸Ä±ä,²»ÓÃÓëÏÂÒ»Ö¡µÄÍ¬²½Í·±È½Ï.
+        fprintf(stderr, "DEBUG: After parse, framesize=%d bitrate=%d\n", intFrameSize, intbitrate);
+        //ï¿½ï¿½intVersionIDï¿½ï¿½Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½Ä±ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»Ö¡ï¿½ï¿½Í¬ï¿½ï¿½Í·ï¿½È½ï¿½.
         if(boolSync)
         {
             bfind = true;
@@ -320,9 +363,9 @@ bool frame_syncSearch()
         cur_mask = 0xffe00000;		//syncword
         cur_mask |= h & 0x180000;	//intVersionID
         cur_mask |= h & 0x60000;	//intLayer
-        cur_mask |= h & 0x60000;	//intSamplingFrequency
+        cur_mask |= h & 0xc00;	//intSamplingFrequency (fixed: was 0x60000)
         //cur_mask |= h & 0xC0;		//intMode
-        //intModeExtension ²»ÊÇÊ¼ÖÕ²»±ä.
+        //intModeExtension ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½Õ²ï¿½ï¿½ï¿½.
 
         if(io_dump(intFrameSize -4, &dwH, 0, 4) < 4)
             break;
@@ -333,7 +376,7 @@ bool frame_syncSearch()
         if(io_offset() - start_pos > 0xffff)
         {
 
-            puts("ËÑË÷ 64K Î´·¢ÏÖMP3Ö¡ºó·ÅÆú¡£");
+            puts("ï¿½ï¿½ï¿½ï¿½ 64K Î´ï¿½ï¿½ï¿½ï¿½MP3Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
             break;
         }
 
@@ -362,7 +405,7 @@ long  frame_getTrackFrames()
     return longAllTrackFrames;
 }
 /*
-* ·µ»ØMP3ÎÄ¼þÊ±³¤(Ãë)
+* ï¿½ï¿½ï¿½ï¿½MP3ï¿½Ä¼ï¿½Ê±ï¿½ï¿½(ï¿½ï¿½)
 */
 double frame_getDuration()
 {

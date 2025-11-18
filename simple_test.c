@@ -26,6 +26,13 @@ int main(int argc, char *argv[])
 
     while(frame_syncFrame()) {
         frame_count++;
+
+        // Skip frame data to position at next frame
+        // After frame_syncFrame(), we're at frame_start + 4 (after header)
+        // Need to skip remaining (frameSize - 4) bytes
+        int frame_size = frame_getFrameSize();
+        io_seek(io_offset() + frame_size - 4);
+
         if(frame_count % 100 == 0) {
             frame_printStatus();
         }
